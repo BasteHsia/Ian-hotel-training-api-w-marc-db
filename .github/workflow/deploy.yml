@@ -1,0 +1,42 @@
+name: Deploy Lambdas
+
+on:
+  push:
+    paths:
+      - 'functions/*.js'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        function: [
+          ian-getRooms,
+          ian-createBooking,
+          ian-updateRoom
+        ]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Prepare function
+        run: |
+          mkdir deploy
+          cp functions/${{ matrix.function }}.js deploy/index.js
+          cp -r functions/config deploy/config
+
+          cd deploy
+          npm init -y
+          npm install pg
+
+          zip -r function.zip .
+
+      - name: Deploy to Lambda
+        uses: appleboy/lambda-action@v0.1.9
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_KEY }}
+          aws_region: ap-southeast-1
+          function_name: ${{ matrix.function }}
+          zip_file: deploy/function.zip
