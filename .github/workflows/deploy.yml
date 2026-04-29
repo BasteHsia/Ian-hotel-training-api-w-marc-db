@@ -13,9 +13,9 @@ jobs:
     strategy:
       matrix:
         function: [
-          ian-getRooms,
-          ian-createBooking,
-          ian-updateRoom
+          Ian-getRooms,
+          Ian-createBooking,
+          Ian-updateRoom
         ]
 
     steps:
