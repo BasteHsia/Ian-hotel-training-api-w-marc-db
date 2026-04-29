@@ -24,8 +24,8 @@ jobs:
       - name: Prepare function
         run: |
           mkdir deploy
-          cp ${{ matrix.function }}.js deploy/index.js
-          cp -r config deploy/config
+          cp functions/${{ matrix.function }}.js deploy/index.js
+          cp -r functions/config deploy/config
 
           cd deploy
           npm init -y
