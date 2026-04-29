@@ -1,6 +1,6 @@
 const pool = require('./config/db');
 
-//getrooms
+
 
 exports.handler = async (event, context) => {
   context.callbackWaitsForEmptyEventLoop = false;
