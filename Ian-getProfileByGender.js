@@ -1,4 +1,4 @@
-const pool = require('../config/db');
+const pool = require('./config/db');
 
 exports.handler = async (event) => {
   const { gender } = event.pathParameters;
