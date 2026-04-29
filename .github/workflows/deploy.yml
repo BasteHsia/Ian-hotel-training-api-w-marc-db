@@ -2,8 +2,8 @@ name: Deploy Lambdas
 # trigger 
 on:
   push:
-    paths:
-      - '*.js'
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
