@@ -15,7 +15,10 @@ jobs:
         function: [
           Ian-getRooms,
           Ian-createBooking,
-          Ian-updateRoom
+          Ian-updateRoom,
+          Ian-deleteRoom,
+          Ian-getBookings,
+          Ian-getTopRevenueDate
         ]
 
     steps:
