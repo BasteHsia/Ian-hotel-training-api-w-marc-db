@@ -1,7 +1,5 @@
 const pool = require('./config/db');
 
-
-
 exports.handler = async (event, context) => {
   context.callbackWaitsForEmptyEventLoop = false;
 
@@ -12,7 +10,9 @@ exports.handler = async (event, context) => {
       statusCode: 200,
       headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*"
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "*",
+        "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS"
       },
       body: JSON.stringify(result.rows),
     };
@@ -22,7 +22,9 @@ exports.handler = async (event, context) => {
       statusCode: 500,
       headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*"
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "*",
+        "Access-Control-Allow-Methods": "*"
       },
       body: JSON.stringify({ message: err.message }),
     };
