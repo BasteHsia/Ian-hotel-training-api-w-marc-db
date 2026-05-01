@@ -9,6 +9,7 @@ exports.handler = async () => {
       FROM payments
       GROUP BY DATE(payment_date)
       ORDER BY total_revenue DESC
+      limit 2
     `);
 
     return {

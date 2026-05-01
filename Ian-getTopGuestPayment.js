@@ -11,6 +11,7 @@ exports.handler = async () => {
       JOIN payments p ON b.booking_id = p.booking_id
       GROUP BY g.guest_id
       ORDER BY total_payment DESC
+      limit 1
     `);
 
     return {

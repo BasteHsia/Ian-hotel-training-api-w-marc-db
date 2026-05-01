@@ -9,6 +9,7 @@ exports.handler = async () => {
       FROM bookings
       GROUP BY room_id
       ORDER BY total_bookings DESC
+      limit 1
     `);
 
     return {
