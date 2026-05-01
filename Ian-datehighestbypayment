@@ -1,0 +1,37 @@
+const pool = require('./config/db');
+
+exports.handler = async () => {
+  try {
+    const result = await pool.query(`
+      WITH daily_revenue AS (
+        SELECT 
+          DATE(p.payment_date) AS revenue_date,
+          SUM(p.payment_amount) AS total_revenue
+        FROM payments p
+        GROUP BY DATE(p.payment_date)
+      ),
+      max_revenue AS (
+        SELECT MAX(total_revenue) AS highest
+        FROM daily_revenue
+      )
+      SELECT *
+      FROM daily_revenue
+      WHERE total_revenue = (SELECT highest FROM max_revenue)
+      ORDER BY revenue_date;
+    `);
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        message: 'Date with highest total revenue retrieved',
+        data: result.rows
+      }),
+    };
+
+  } catch (err) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ message: err.message }),
+    };
+  }
+};
