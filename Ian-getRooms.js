@@ -3,6 +3,19 @@ const pool = require('./config/db');
 exports.handler = async (event, context) => {
   context.callbackWaitsForEmptyEventLoop = false;
 
+  // 🔥 HANDLE CORS PREFLIGHT (OPTIONS)
+  if (event.requestContext?.http?.method === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "*",
+        "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS"
+      },
+      body: ""
+    };
+  }
+
   try {
     const result = await pool.query('SELECT * FROM rooms ORDER BY room_id');
 
