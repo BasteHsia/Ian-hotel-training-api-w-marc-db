@@ -10,6 +10,7 @@ exports.handler = async () => {
       JOIN payments p ON b.booking_id = p.booking_id
       GROUP BY b.room_id
       ORDER BY total_revenue DESC
+      limit 1
     `);
 
     return {
@@ -17,6 +18,7 @@ exports.handler = async () => {
       body: JSON.stringify({
         message: 'Rooms with highest revenue retrieved',
         data: result.rows
+        
       }),
     };
 
