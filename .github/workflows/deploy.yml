@@ -49,6 +49,7 @@ jobs:
           Ian-updateEmployment,
           Ian-updateGuestMember,
           Ian-updateProfile,
+          Ian-datehighestbybooking
         ]
 
     steps:
