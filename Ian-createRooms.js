@@ -1,19 +1,8 @@
-const { Pool } = require('pg');
-
-const pool = new Pool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
+const pool = require('./config/db');
 
 exports.handler = async (event) => {
   try {
-    const body = JSON.parse(event.body);
+    const body = event.body ? JSON.parse(event.body) : {};
 
     const {
       room_number,
@@ -23,22 +12,26 @@ exports.handler = async (event) => {
       room_description
     } = body;
 
-    // 🔴 VALIDATION (no status here)
+    // ✅ VALIDATION
     if (
       !room_number ||
       !room_size ||
-      !room_capacity ||
-      !price_per_night
+      room_capacity == null ||
+      price_per_night == null
     ) {
       return {
         statusCode: 400,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*"
+        },
         body: JSON.stringify({
           message: "Missing required fields"
         })
       };
     }
 
-    // 🔍 CHECK DUPLICATE ROOM NUMBER
+    // 🔍 DUPLICATE CHECK
     const existingRoom = await pool.query(
       `SELECT * FROM rooms WHERE room_number = $1`,
       [room_number]
@@ -47,13 +40,17 @@ exports.handler = async (event) => {
     if (existingRoom.rows.length > 0) {
       return {
         statusCode: 400,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*"
+        },
         body: JSON.stringify({
           message: "Room number already exists"
         })
       };
     }
 
-    // ✅ AUTO STATUS = 'Available'
+    // ✅ INSERT
     const result = await pool.query(
       `INSERT INTO rooms 
         (room_number, room_size, room_capacity, price_per_night, status, room_description)
@@ -70,6 +67,10 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 201,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+      },
       body: JSON.stringify({
         message: "Room created successfully",
         data: result.rows[0]
@@ -81,6 +82,10 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 500,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+      },
       body: JSON.stringify({
         message: err.message
       })
