@@ -2,26 +2,36 @@ const pool = require('./config/db');
 
 exports.handler = async (event) => {
 
-  // ✅ HANDLE CORS PREFLIGHT
-  if (event.requestContext?.http?.method === "OPTIONS") {
+  const method = event.requestContext?.http?.method;
+
+  // ✅ handle preflight
+  if (method === "OPTIONS") {
     return {
       statusCode: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "*",
-        "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS"
-      },
+      headers: corsHeaders,
       body: ""
     };
   }
 
-  // ⚠️ IMPORTANT: match API Gateway param
-  const { booking_id } = event.pathParameters; // <-- change here
-
   try {
+    // ✅ SAFE extraction
+    const booking_id = event.pathParameters?.booking_id;
+
+    if (!booking_id) {
+      return {
+        statusCode: 400,
+        headers: corsHeaders,
+        body: JSON.stringify({ message: "booking_id is required" }),
+      };
+    }
+
+    const cleanId = booking_id.trim();
+
+    console.log("DELETE booking:", cleanId);
+
     const result = await pool.query(
       'DELETE FROM bookings WHERE booking_id = $1 RETURNING *',
-      [booking_id] // <-- change here
+      [cleanId]
     );
 
     if (result.rows.length === 0) {
@@ -42,6 +52,8 @@ exports.handler = async (event) => {
     };
 
   } catch (err) {
+    console.error("ERROR:", err);
+
     return {
       statusCode: 500,
       headers: corsHeaders,
@@ -50,7 +62,7 @@ exports.handler = async (event) => {
   }
 };
 
-// 🔥 reusable headers
+// ✅ reusable headers
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "*",
