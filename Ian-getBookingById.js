@@ -1,9 +1,25 @@
 const pool = require('./config/db');
 
-exports.handler = async (event) => {
-  const { booking_id } = event.pathParameters;
+// 🔥 reusable CORS headers
+const corsHeaders = {
+  "Content-Type": "application/json",
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "Content-Type,Authorization",
+  "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS"
+};
 
+exports.handler = async (event) => {
   try {
+    const { booking_id } = event.pathParameters || {};
+
+    if (!booking_id) {
+      return {
+        statusCode: 400,
+        headers: corsHeaders,
+        body: JSON.stringify({ message: "booking_id is required" }),
+      };
+    }
+
     const result = await pool.query(
       `
       SELECT 
@@ -38,6 +54,7 @@ exports.handler = async (event) => {
     if (result.rows.length === 0) {
       return {
         statusCode: 404,
+        headers: corsHeaders,
         body: JSON.stringify({ message: 'Booking not found' }),
       };
     }
@@ -58,6 +75,7 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
+      headers: corsHeaders,
       body: JSON.stringify({
         guest_id: data.guest_id,
         guest_name: data.guest_name,
@@ -75,6 +93,7 @@ exports.handler = async (event) => {
   } catch (err) {
     return {
       statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify({ message: err.message }),
     };
   }

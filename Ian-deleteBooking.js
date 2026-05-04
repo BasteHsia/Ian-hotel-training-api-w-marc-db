@@ -1,5 +1,7 @@
 const pool = require('./config/db');
 
+
+
 // ✅ reusable headers
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
