@@ -22,26 +22,45 @@ exports.handler = async (event) => {
   }
 
   try {
+    const { guest_id } = event.pathParameters || {};
+
+    if (!guest_id) {
+      return {
+        statusCode: 400,
+        headers: corsHeaders,
+        body: JSON.stringify({ message: "guest_id is required" })
+      };
+    }
+
     const result = await pool.query(
-      `SELECT * FROM guests ORDER BY guest_id DESC`
+      `SELECT * FROM guests WHERE guest_id = $1`,
+      [guest_id]
     );
+
+    if (result.rows.length === 0) {
+      return {
+        statusCode: 404,
+        headers: corsHeaders,
+        body: JSON.stringify({ message: 'Guest not found' })
+      };
+    }
 
     return {
       statusCode: 200,
-      headers: corsHeaders, // 🔥 IMPORTANT
+      headers: corsHeaders,
       body: JSON.stringify({
-        count: result.rows.length,
-        data: result.rows
-      }),
+        message: "Guest retrieved successfully",
+        data: result.rows[0]
+      })
     };
 
   } catch (err) {
-    console.error("GET GUESTS ERROR:", err);
+    console.error("GET GUEST BY ID ERROR:", err);
 
     return {
       statusCode: 500,
-      headers: corsHeaders, // 🔥 IMPORTANT
-      body: JSON.stringify({ message: err.message }),
+      headers: corsHeaders,
+      body: JSON.stringify({ message: err.message })
     };
   }
 };
