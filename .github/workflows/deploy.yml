@@ -51,6 +51,7 @@ jobs:
           Ian-updateProfile,
           Ian-datehighestbybooking,
           Ian-createRooms,
+          Ian-optionsHandler,
         ]
 
     steps:
