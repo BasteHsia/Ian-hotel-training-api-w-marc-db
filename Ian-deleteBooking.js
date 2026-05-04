@@ -16,12 +16,12 @@ exports.handler = async (event) => {
   }
 
   // ⚠️ IMPORTANT: match API Gateway param
-  const { id } = event.pathParameters; // <-- change here
+  const { booking_id } = event.pathParameters; // <-- change here
 
   try {
     const result = await pool.query(
       'DELETE FROM bookings WHERE booking_id = $1 RETURNING *',
-      [id] // <-- change here
+      [booking_id] // <-- change here
     );
 
     if (result.rows.length === 0) {
