@@ -1,5 +1,12 @@
 const pool = require('./config/db');
 
+// ✅ reusable headers
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "*",
+  "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS"
+};
+
 exports.handler = async (event) => {
 
   const method = event.requestContext?.http?.method;
@@ -14,7 +21,8 @@ exports.handler = async (event) => {
   }
 
   try {
-    // ✅ SAFE extraction
+    console.log("EVENT:", JSON.stringify(event)); // 🔥 DEBUG
+
     const booking_id = event.pathParameters?.booking_id;
 
     if (!booking_id) {
@@ -52,19 +60,15 @@ exports.handler = async (event) => {
     };
 
   } catch (err) {
-    console.error("ERROR:", err);
+    console.error("DELETE ERROR:", err);
 
     return {
       statusCode: 500,
       headers: corsHeaders,
-      body: JSON.stringify({ message: err.message }),
+      body: JSON.stringify({
+        message: "Internal server error",
+        error: err.message
+      }),
     };
   }
-};
-
-// ✅ reusable headers
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "*",
-  "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS"
 };
