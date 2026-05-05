@@ -1,18 +1,16 @@
 const pool = require('./config/db');
 
-// 🔥 reusable CORS headers
 const corsHeaders = {
   "Content-Type": "application/json",
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "*",
-  "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS"
+  "Access-Control-Allow-Methods": "GET,OPTIONS"
 };
 
 exports.handler = async (event) => {
 
   const method = event.requestContext?.http?.method;
 
-  // 🔥 HANDLE PREFLIGHT
   if (method === "OPTIONS") {
     return {
       statusCode: 200,
@@ -22,40 +20,23 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { guest_id } = event.pathParameters || {};
 
-    if (!guest_id) {
-      return {
-        statusCode: 400,
-        headers: corsHeaders,
-        body: JSON.stringify({ message: "guest_id is required" })
-      };
-    }
-
-    const result = await pool.query(
-      `SELECT * FROM guests WHERE guest_id = $1`,
-      [guest_id]
-    );
-
-    if (result.rows.length === 0) {
-      return {
-        statusCode: 404,
-        headers: corsHeaders,
-        body: JSON.stringify({ message: 'Guest not found' })
-      };
-    }
+    const result = await pool.query(`
+      SELECT * FROM guests
+      ORDER BY guest_id ASC
+    `);
 
     return {
       statusCode: 200,
       headers: corsHeaders,
       body: JSON.stringify({
-        message: "Guest retrieved successfully",
-        data: result.rows[0]
+        message: "Guests retrieved successfully",
+        data: result.rows
       })
     };
 
   } catch (err) {
-    console.error("GET GUEST BY ID ERROR:", err);
+    console.error("GET ALL GUESTS ERROR:", err);
 
     return {
       statusCode: 500,

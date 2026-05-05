@@ -1,36 +1,59 @@
 const pool = require('./config/db');
 
-// 🔥 reusable CORS headers
 const corsHeaders = {
   "Content-Type": "application/json",
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type,Authorization",
-  "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS"
+  "Access-Control-Allow-Headers": "*",
+  "Access-Control-Allow-Methods": "GET,OPTIONS"
 };
 
 exports.handler = async (event) => {
-  const { is_member } = event.pathParameters;
+
+  const method = event.requestContext?.http?.method;
+
+  if (method === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers: corsHeaders,
+      body: ""
+    };
+  }
 
   try {
-    const memberStatus = is_member === 'true';
+    const { is_member } = event.pathParameters || {};
+
+    if (is_member === undefined) {
+      return {
+        statusCode: 400,
+        headers: corsHeaders,
+        body: JSON.stringify({ message: "is_member is required" })
+      };
+    }
+
+    // 🔥 convert string to boolean
+    const isMemberBool = is_member === "true";
 
     const result = await pool.query(
       `SELECT * FROM guests WHERE is_member = $1`,
-      [memberStatus]
+      [isMemberBool]
     );
 
     return {
       statusCode: 200,
+      headers: corsHeaders,
       body: JSON.stringify({
-        count: result.rows.length,
+        message: "Guests filtered by membership",
         data: result.rows
-      }),
+      })
     };
 
   } catch (err) {
+    console.error("GET GUESTS BY MEMBER ERROR:", err);
+
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: err.message }),
+      headers: corsHeaders,
+      body: JSON.stringify({ message: err.message })
     };
   }
 };
