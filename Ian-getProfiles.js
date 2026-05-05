@@ -8,7 +8,19 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS"
 };
 
-exports.handler = async () => {
+exports.handler = async (event) => {
+
+  const method = event.requestContext?.http?.method;
+
+  // ✅ HANDLE PREFLIGHT
+  if (method === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers: corsHeaders,
+      body: ""
+    };
+  }
+
   try {
     const result = await pool.query(
       `SELECT * FROM profiles ORDER BY profile_id DESC`
@@ -16,6 +28,7 @@ exports.handler = async () => {
 
     return {
       statusCode: 200,
+      headers: corsHeaders, // ✅ VERY IMPORTANT
       body: JSON.stringify({
         data: result.rows
       }),
@@ -24,6 +37,7 @@ exports.handler = async () => {
   } catch (err) {
     return {
       statusCode: 500,
+      headers: corsHeaders, // ✅ ALSO HERE
       body: JSON.stringify({ message: err.message }),
     };
   }

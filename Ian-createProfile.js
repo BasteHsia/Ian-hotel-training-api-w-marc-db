@@ -9,20 +9,36 @@ const corsHeaders = {
 };
 
 exports.handler = async (event) => {
-  const {
-    first_name,
-    last_name,
-    date_of_birth,
-    gender,
-    marital_status,
-    contact_number,
-    profile_type,
-    guest_type
-  } = JSON.parse(event.body);
 
-  const client = await pool.connect();
+  const method = event.requestContext?.http?.method;
+
+  // ✅ HANDLE PREFLIGHT
+  if (method === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers: corsHeaders,
+      body: ""
+    };
+  }
+
+  let client;
 
   try {
+    // ✅ SAFE PARSE
+    const body = event.body ? JSON.parse(event.body) : {};
+
+    const {
+      first_name,
+      last_name,
+      date_of_birth,
+      gender,
+      marital_status,
+      contact_number,
+      profile_type,
+      guest_type
+    } = body;
+
+    // ✅ validation
     if (
       !first_name ||
       !last_name ||
@@ -34,10 +50,14 @@ exports.handler = async (event) => {
     ) {
       return {
         statusCode: 400,
+        headers: corsHeaders,
         body: JSON.stringify({ message: 'All fields are required' }),
       };
     }
 
+    client = await pool.connect();
+
+    // ✅ duplicate check
     const existing = await client.query(
       `SELECT 1 FROM profiles 
        WHERE LOWER(first_name) = LOWER($1)
@@ -49,6 +69,7 @@ exports.handler = async (event) => {
     if (existing.rows.length > 0) {
       return {
         statusCode: 400,
+        headers: corsHeaders,
         body: JSON.stringify({
           message: 'Profile already exists'
         }),
@@ -57,6 +78,7 @@ exports.handler = async (event) => {
 
     await client.query('BEGIN');
 
+    // ✅ insert profile
     const profileResult = await client.query(
       `INSERT INTO profiles
       (first_name, last_name, date_of_birth, gender, marital_status, contact_number, profile_type)
@@ -75,6 +97,7 @@ exports.handler = async (event) => {
 
     const newProfile = profileResult.rows[0];
 
+    // ✅ conditional guest insert
     if (profile_type === 'guest') {
       await client.query(
         `INSERT INTO guests
@@ -92,6 +115,7 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 201,
+      headers: corsHeaders,
       body: JSON.stringify({
         message: 'Profile and guest created successfully',
         data: newProfile
@@ -99,13 +123,15 @@ exports.handler = async (event) => {
     };
 
   } catch (err) {
-    await client.query('ROLLBACK');
+    if (client) await client.query('ROLLBACK');
 
     return {
       statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify({ message: err.message }),
     };
+
   } finally {
-    client.release();
+    if (client) client.release();
   }
 };

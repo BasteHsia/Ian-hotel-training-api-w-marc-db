@@ -9,10 +9,33 @@ const corsHeaders = {
 };
 
 exports.handler = async (event) => {
-  const { profile_id } = event.pathParameters;
-  const updates = JSON.parse(event.body);
+
+  const method = event.requestContext?.http?.method;
+
+  // ✅ HANDLE PREFLIGHT
+  if (method === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers: corsHeaders,
+      body: ""
+    };
+  }
 
   try {
+    const { profile_id } = event.pathParameters || {};
+
+    // ✅ validate param
+    if (!profile_id) {
+      return {
+        statusCode: 400,
+        headers: corsHeaders,
+        body: JSON.stringify({ message: 'profile_id is required' }),
+      };
+    }
+
+    // ✅ safe parse
+    const updates = event.body ? JSON.parse(event.body) : {};
+
     const check = await pool.query(
       `SELECT 1 FROM profiles WHERE profile_id = $1`,
       [profile_id]
@@ -21,6 +44,7 @@ exports.handler = async (event) => {
     if (check.rows.length === 0) {
       return {
         statusCode: 404,
+        headers: corsHeaders,
         body: JSON.stringify({ message: 'Profile not found' }),
       };
     }
@@ -47,9 +71,11 @@ exports.handler = async (event) => {
       index++;
     }
 
+    // ✅ no valid fields
     if (fields.length === 0) {
       return {
         statusCode: 400,
+        headers: corsHeaders,
         body: JSON.stringify({ message: 'No valid fields provided' }),
       };
     }
@@ -67,6 +93,7 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
+      headers: corsHeaders,
       body: JSON.stringify({
         message: 'Profile updated successfully',
         data: result.rows[0]
@@ -76,6 +103,7 @@ exports.handler = async (event) => {
   } catch (err) {
     return {
       statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify({ message: err.message }),
     };
   }
