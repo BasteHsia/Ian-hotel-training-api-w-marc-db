@@ -4,7 +4,7 @@ const corsHeaders = {
   "Content-Type": "application/json",
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Content-Type,Authorization",
-  "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS"
+  "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS,PATCH"
 };
 
 exports.handler = async (event) => {
@@ -30,8 +30,9 @@ exports.handler = async (event) => {
     }
 
     const result = await pool.query(
-      `DELETE FROM employment_details 
-       WHERE employee_id = $1 
+      `UPDATE employment_details
+       SET is_active = false
+       WHERE employee_id = $1
        RETURNING *`,
       [employee_id]
     );
@@ -48,13 +49,13 @@ exports.handler = async (event) => {
       statusCode: 200,
       headers: corsHeaders,
       body: JSON.stringify({
-        message: "Employee deleted successfully",
-        deleted: result.rows[0]
+        message: "Employee deactivated successfully",
+        data: result.rows[0]
       }),
     };
 
   } catch (err) {
-    console.error("Error deleting employee:", err);
+    console.error("Error deactivating employee:", err);
 
     return {
       statusCode: 500,

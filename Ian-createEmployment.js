@@ -1,6 +1,5 @@
 const pool = require('./config/db');
 
-// 🔥 reusable CORS headers
 const corsHeaders = {
   "Content-Type": "application/json",
   "Access-Control-Allow-Origin": "*",
@@ -9,16 +8,26 @@ const corsHeaders = {
 };
 
 exports.handler = async (event) => {
-  const {
-    profile_id,
-    hire_date,
-    job_title,
-    position_level,
-    emp_type,
-    shift
-  } = JSON.parse(event.body);
+  const method = event.requestContext?.http?.method;
+
+  if (method === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers: corsHeaders,
+      body: ""
+    };
+  }
 
   try {
+    const {
+      profile_id,
+      hire_date,
+      job_title,
+      position_level,
+      emp_type,
+      shift
+    } = event.body ? JSON.parse(event.body) : {};
+
     if (
       !profile_id ||
       !hire_date ||
@@ -29,7 +38,8 @@ exports.handler = async (event) => {
     ) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ message: 'All fields are required' }),
+        headers: corsHeaders,
+        body: JSON.stringify({ message: "All fields are required" }),
       };
     }
 
@@ -41,15 +51,17 @@ exports.handler = async (event) => {
     if (profileCheck.rows.length === 0) {
       return {
         statusCode: 404,
-        body: JSON.stringify({ message: 'Profile not found' }),
+        headers: corsHeaders,
+        body: JSON.stringify({ message: "Profile not found" }),
       };
     }
 
-    if (profileCheck.rows[0].profile_type !== 'employee') {
+    if (profileCheck.rows[0].profile_type !== "employee") {
       return {
         statusCode: 400,
+        headers: corsHeaders,
         body: JSON.stringify({
-          message: 'Only employee profiles can be assigned employment details'
+          message: "Only employee profiles can be assigned employment details"
         }),
       };
     }
@@ -62,8 +74,9 @@ exports.handler = async (event) => {
     if (existing.rows.length > 0) {
       return {
         statusCode: 400,
+        headers: corsHeaders,
         body: JSON.stringify({
-          message: 'This profile already has employment details'
+          message: "This profile already has employment details"
         }),
       };
     }
@@ -85,15 +98,19 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 201,
+      headers: corsHeaders,
       body: JSON.stringify({
-        message: 'Employee created successfully',
+        message: "Employee created successfully",
         data: result.rows[0]
       }),
     };
 
   } catch (err) {
+    console.error("Error creating employment:", err);
+
     return {
       statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify({ message: err.message }),
     };
   }
