@@ -1,6 +1,5 @@
 const pool = require('./config/db');
 
-// 🔥 reusable CORS headers
 const corsHeaders = {
   "Content-Type": "application/json",
   "Access-Control-Allow-Origin": "*",
@@ -9,36 +8,57 @@ const corsHeaders = {
 };
 
 exports.handler = async (event) => {
-  const { employee_id } = event.pathParameters;
+  const method = event.requestContext?.http?.method;
+
+  if (method === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers: corsHeaders,
+      body: ""
+    };
+  }
 
   try {
-    const check = await pool.query(
-      `SELECT 1 FROM employment_details WHERE employee_id = $1`,
-      [employee_id]
-    );
+    const { employee_id } = event.pathParameters || {};
 
-    if (check.rows.length === 0) {
+    if (!employee_id) {
       return {
-        statusCode: 404,
-        body: JSON.stringify({ message: 'Employee not found' }),
+        statusCode: 400,
+        headers: corsHeaders,
+        body: JSON.stringify({ message: "employee_id is required" }),
       };
     }
 
-    await pool.query(
-      `DELETE FROM employment_details WHERE employee_id = $1`,
+    const result = await pool.query(
+      `DELETE FROM employment_details 
+       WHERE employee_id = $1 
+       RETURNING *`,
       [employee_id]
     );
 
+    if (result.rows.length === 0) {
+      return {
+        statusCode: 404,
+        headers: corsHeaders,
+        body: JSON.stringify({ message: "Employee not found" }),
+      };
+    }
+
     return {
       statusCode: 200,
+      headers: corsHeaders,
       body: JSON.stringify({
-        message: 'Employee deleted successfully'
+        message: "Employee deleted successfully",
+        deleted: result.rows[0]
       }),
     };
 
   } catch (err) {
+    console.error("Error deleting employee:", err);
+
     return {
       statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify({ message: err.message }),
     };
   }
