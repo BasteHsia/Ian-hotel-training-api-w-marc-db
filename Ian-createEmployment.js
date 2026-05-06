@@ -81,12 +81,43 @@ exports.handler = async (event) => {
       };
     }
 
+    // ✅ AUTO-GENERATE NEXT EMPLOYEE ID
+    const lastEmployee = await pool.query(`
+      SELECT employee_id
+      FROM employment_details
+      WHERE employee_id IS NOT NULL
+      ORDER BY CAST(REPLACE(employee_id, 'EMP', '') AS INTEGER) DESC
+      LIMIT 1
+    `);
+
+    let nextEmployeeId = "EMP001";
+
+    if (lastEmployee.rows.length > 0) {
+      const lastNumber = parseInt(
+        lastEmployee.rows[0].employee_id.replace("EMP", ""),
+        10
+      );
+
+      nextEmployeeId = `EMP${String(lastNumber + 1).padStart(3, "0")}`;
+    }
+
     const result = await pool.query(
       `INSERT INTO employment_details
-      (profile_id, hire_date, job_title, position_level, emp_type, status, shift, is_active)
-      VALUES ($1, $2, $3, $4, $5, 'Probation', $6, true)
+      (
+        employee_id,
+        profile_id,
+        hire_date,
+        job_title,
+        position_level,
+        emp_type,
+        status,
+        shift,
+        is_active
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, 'Probation', $7, true)
       RETURNING *`,
       [
+        nextEmployeeId,
         profile_id,
         hire_date,
         job_title,
