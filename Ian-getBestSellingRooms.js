@@ -8,7 +8,18 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS"
 };
 
-exports.handler = async () => {
+exports.handler = async (event) => {
+  const method = event.requestContext?.http?.method || event.httpMethod;
+
+  // ✅ handle preflight
+  if (method === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers: corsHeaders,
+      body: ""
+    };
+  }
+
   try {
     const result = await pool.query(`
       SELECT 
@@ -17,13 +28,14 @@ exports.handler = async () => {
       FROM bookings
       GROUP BY room_id
       ORDER BY total_bookings DESC
-      limit 1
+      LIMIT 1
     `);
 
     return {
       statusCode: 200,
+      headers: corsHeaders,
       body: JSON.stringify({
-        message: 'Best selling rooms retrieved',
+        message: "Best selling room retrieved",
         data: result.rows
       }),
     };
@@ -31,7 +43,10 @@ exports.handler = async () => {
   } catch (err) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: err.message }),
+      headers: corsHeaders,
+      body: JSON.stringify({
+        message: err.message
+      }),
     };
   }
 };

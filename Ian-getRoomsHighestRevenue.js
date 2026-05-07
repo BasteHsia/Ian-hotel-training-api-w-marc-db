@@ -8,7 +8,18 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS"
 };
 
-exports.handler = async () => {
+exports.handler = async (event) => {
+  const method = event.requestContext?.http?.method || event.httpMethod;
+
+  // ✅ handle preflight
+  if (method === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers: corsHeaders,
+      body: ""
+    };
+  }
+
   try {
     const result = await pool.query(`
       SELECT 
@@ -18,22 +29,25 @@ exports.handler = async () => {
       JOIN payments p ON b.booking_id = p.booking_id
       GROUP BY b.room_id
       ORDER BY total_revenue DESC
-      limit 1
+      LIMIT 1
     `);
 
     return {
       statusCode: 200,
+      headers: corsHeaders,
       body: JSON.stringify({
-        message: 'Rooms with highest revenue retrieved',
+        message: "Room with highest revenue retrieved",
         data: result.rows
-        
       }),
     };
 
   } catch (err) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: err.message }),
+      headers: corsHeaders,
+      body: JSON.stringify({
+        message: err.message
+      }),
     };
   }
 };

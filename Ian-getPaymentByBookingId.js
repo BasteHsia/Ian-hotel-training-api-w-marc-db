@@ -9,9 +9,31 @@ const corsHeaders = {
 };
 
 exports.handler = async (event) => {
-  const { booking_id } = event.pathParameters;
+  const method = event.requestContext?.http?.method || event.httpMethod;
+
+  // ✅ handle preflight
+  if (method === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers: corsHeaders,
+      body: ""
+    };
+  }
 
   try {
+    const { booking_id } = event.pathParameters || {};
+
+    // ✅ validation
+    if (!booking_id) {
+      return {
+        statusCode: 400,
+        headers: corsHeaders,
+        body: JSON.stringify({
+          message: "booking_id is required"
+        }),
+      };
+    }
+
     const result = await pool.query(
       `SELECT * FROM payments WHERE booking_id = $1`,
       [booking_id]
@@ -20,6 +42,7 @@ exports.handler = async (event) => {
     if (result.rows.length === 0) {
       return {
         statusCode: 404,
+        headers: corsHeaders,
         body: JSON.stringify({
           message: 'No payment found for this booking'
         }),
@@ -28,6 +51,7 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
+      headers: corsHeaders,
       body: JSON.stringify({
         data: result.rows
       }),
@@ -36,7 +60,10 @@ exports.handler = async (event) => {
   } catch (err) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: err.message }),
+      headers: corsHeaders,
+      body: JSON.stringify({
+        message: err.message
+      }),
     };
   }
 };

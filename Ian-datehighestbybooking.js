@@ -6,9 +6,20 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Content-Type,Authorization",
   "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS"
-}; 
+};
 
-exports.handler = async () => {
+exports.handler = async (event) => {
+  const method = event.requestContext?.http?.method || event.httpMethod;
+
+  // ✅ handle preflight
+  if (method === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers: corsHeaders,
+      body: ""
+    };
+  }
+
   try {
     const result = await pool.query(`
       WITH booking_counts AS (
@@ -30,8 +41,9 @@ exports.handler = async () => {
 
     return {
       statusCode: 200,
+      headers: corsHeaders,
       body: JSON.stringify({
-        message: 'Date with highest number of bookings retrieved',
+        message: "Date with highest number of bookings retrieved",
         data: result.rows
       }),
     };
@@ -39,7 +51,10 @@ exports.handler = async () => {
   } catch (err) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: err.message }),
+      headers: corsHeaders,
+      body: JSON.stringify({
+        message: err.message
+      }),
     };
   }
 };
