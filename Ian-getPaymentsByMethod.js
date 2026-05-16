@@ -21,10 +21,10 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { method } = event.pathParameters || {};
+    const { payment_method } = event.pathParameters || {};
 
     // ✅ validation
-    if (!method) {
+    if (!payment_method) {
       return {
         statusCode: 400,
         headers: corsHeaders,
@@ -36,7 +36,7 @@ exports.handler = async (event) => {
 
     const result = await pool.query(
       `SELECT * FROM payments WHERE payment_method = $1 ORDER BY payment_date DESC`,
-      [method]
+      [payment_method]
     );
 
     if (result.rows.length === 0) {
