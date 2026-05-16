@@ -14,7 +14,7 @@ exports.handler = async (event) => {
     event.requestContext?.http?.method ||
     event.httpMethod;
 
-  // ✅ HANDLE OPTIONS
+  // ✅ OPTIONS
   if (method === "OPTIONS") {
 
     return {
@@ -27,32 +27,31 @@ exports.handler = async (event) => {
 
   try {
 
-    // ✅ BEST SELLING ROOMS BY REVENUE
     const result = await pool.query(`
 
       SELECT 
         r.room_id,
         r.room_number,
         r.room_description,
-        r.room_type,
         r.price_per_night,
 
-        SUM(p.payment_amount)
-          AS total_revenue
+        COALESCE(
+          SUM(p.payment_amount),
+          0
+        ) AS total_revenue
 
       FROM rooms r
 
-      JOIN bookings b
+      LEFT JOIN bookings b
         ON r.room_id = b.room_id
 
-      JOIN payments p
+      LEFT JOIN payments p
         ON b.booking_id = p.booking_id
 
       GROUP BY 
         r.room_id,
         r.room_number,
         r.room_description,
-        r.room_type,
         r.price_per_night
 
       ORDER BY total_revenue DESC
@@ -70,7 +69,7 @@ exports.handler = async (event) => {
       body: JSON.stringify({
 
         message:
-          "Best selling rooms by revenue retrieved successfully",
+          "Best selling rooms retrieved successfully",
 
         total_rooms:
           result.rows.length,
